@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Physics Experiments Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="glow"></div>
+    <div class="container">
+        <header>
+            <h1>NYU Abu Dhabi Quantum Physics Experiments</h1>
+            <p class="subtitle">Interactive simulations to explore quantum phenomena</p>
+        </header>
+
+        <div class="experiments-grid" id="experimentsGrid">
+            <!-- Experiment cards will be generated here -->
+        </div>
+
+        <div class="simulation-container" id="simulationContainer">
+            <div class="simulation-header">
+                <h2 id="simulationTitle">Experiment Simulation</h2>
+                <button class="close-btn" id="closeSimulation">&times;</button>
+            </div>
+            <div class="simulation-content">
+                <div class="simulation-description">
+                    <h3>About this experiment</h3>
+                    <p id="simulationDescription"></p>
+                    <div id="simulationControls" class="controls">
+                        <!-- Controls will be added dynamically -->
+                    </div>
+                </div>
+                <div class="simulation-canvas-container">
+                    <canvas id="simulationCanvas"></canvas>
+                    <div id="simulationInfo" class="simulation-info"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Interactive NYU Abu Dhabi Quantum Physics Experiments Dashboard &copy; 2025</p>
+    </footer>
+
+    <script src="experiments.js"></script>
+    <script src="main.js"></script>
+    
+    <!-- Canvas Rendering Fix Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Initializing canvas fix...');
+        
+        // Fix 1: Properly initialize canvas and context
+        const simulationCanvas = document.getElementById('simulationCanvas');
+        let ctx = simulationCanvas.getContext('2d');
+        
+        // Fix 2: Ensure the canvas is visible and properly sized
+        function improvedResizeCanvas() {
+            console.log('Resizing canvas...');
+            const devicePixelRatio = window.devicePixelRatio || 1;
+            const rect = simulationCanvas.getBoundingClientRect();
+            
+            // Check if dimensions are valid
+            if (rect.width === 0 || rect.height === 0) {
+                console.warn('Canvas has zero dimensions, skipping resize');
+                return;
+            }
+            
+            // Set actual dimensions in memory (scaled for retina displays)
+            simulationCanvas.width = rect.width * devicePixelRatio;
+            simulationCanvas.height = rect.height * devicePixelRatio;
+            
+            // Set the display size
+            simulationCanvas.style.width = rect.width + 'px';
+            simulationCanvas.style.height = rect.height + 'px';
+            
+            // Reset transformation matrix
+            ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+            
+            console.log(`Canvas resized to ${simulationCanvas.width}x${simulationCanvas.height}`);
+        }
+        
+        // Fix 3: Override the openExperiment function to ensure rendering happens properly
+        const originalOpenExperiment = window.openExperiment;
+        if (originalOpenExperiment) {
+            window.openExperiment = function(experimentId) {
+                console.log(`Opening experiment: ${experimentId}`);
+                
+                // Call the original function
+                originalOpenExperiment(experimentId);
+                
+                // Apply fixes after original function runs
+                setTimeout(() => {
+                    // Force canvas resize after the container is visible
+                    improvedResizeCanvas();
+                    
+                    // Force redraw
+                    if (window.currentExperiment && window.drawExperiment) {
+                        try {
+                            console.log('Force redrawing experiment...');
+                            window.drawExperiment();
+                        } catch (err) {
+                            console.error('Error while redrawing experiment:', err);
+                        }
+                    }
+                }, 100);
+            };
+        }
+        
+        // Fix 4: Override the animateExperiment function to add error handling
+        const originalAnimateExperiment = window.animateExperiment;
+        if (originalAnimateExperiment) {
+            window.animateExperiment = function() {
+                try {
+                    // Call the original function
+                    originalAnimateExperiment();
+                } catch (err) {
+                    console.error('Error in animation loop:', err);
+                    // Restart animation if it fails
+                    window.animationId = requestAnimationFrame(window.animateExperiment);
+                }
+            };
+        }
+        
+        // Fix 5: Add global window resize handler
+        window.addEventListener('resize', () => {
+            if (document.getElementById('simulationContainer').style.display !== 'none') {
+                improvedResizeCanvas();
+            }
+        });
+        
+        // Fix 6: Monitor for style changes on the simulation container
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'style' && 
+                    document.getElementById('simulationContainer').style.display !== 'none') {
+                    setTimeout(improvedResizeCanvas, 50);
+                }
+            });
+        });
+        
+        observer.observe(document.getElementById('simulationContainer'), { attributes: true });
+        
+        console.log('Canvas fix initialization complete');
+    });
+    </script>
+</body>
+</html>
